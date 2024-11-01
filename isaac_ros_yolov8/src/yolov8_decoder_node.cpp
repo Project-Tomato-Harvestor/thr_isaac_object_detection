@@ -32,7 +32,7 @@
 #include <opencv4/opencv2/dnn.hpp>
 #include <opencv4/opencv2/dnn/dnn.hpp>
 
-#include "std_msgs/msg/bool.hpp"  // Add this for the Bool message type
+#include "std_msgs/msg/string.hpp"
 #include "std_msgs/msg/int8.hpp"
 #include "vision_msgs/msg/detection2_d_array.hpp"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
@@ -65,31 +65,30 @@ YoloV8DecoderNode::YoloV8DecoderNode(const rclcpp::NodeOptions options)
   tensor_name_{declare_parameter<std::string>("tensor_name", "output_tensor")},
   confidence_threshold_{declare_parameter<double>("confidence_threshold", 0.25)},
   nms_threshold_{declare_parameter<double>("nms_threshold", 0.45)},
-  start_detection_flag_{false}, // Initialise detection flag to false
+  isEnabled{false}, // Initialise detection flag to false
   selected_target_id_{1}, // Initialise selected target id to -1 (none of the classes)
   fs_(20.0), // Set the sampling frequency to 20 Hz
   yolo_kf_{std::make_shared<YOLOKF>(this)} // Instantiate YOLOKF
 {
   // Add a subscriber to control detection start/stop and select target
-  fsm_flag_sub_ = this->create_subscription<std_msgs::msg::Bool>(
-      "/fsm_flag/start_detection",
-      10, std::bind(&YoloV8DecoderNode::FsmFlagCallback, this, std::placeholders::_1));
+  enable_sub_ = this->create_subscription<std_msgs::msg::Bool>(
+      "yolo_enable",
+      10, std::bind(&YoloV8DecoderNode::enableCallback, this, std::placeholders::_1));
     
-  fsm_select_target_sub_ = this->create_subscription<std_msgs::msg::Int8>(
+  target_select_sub_ = this->create_subscription<std_msgs::msg::Int8>(
       "/fsm_flag/select_target",
-      10, std::bind(&YoloV8DecoderNode::FsmSelectTargetCallback, this, std::placeholders::_1));
+      10, std::bind(&YoloV8DecoderNode::targetSelectCallback, this, std::placeholders::_1));
 }
 
 YoloV8DecoderNode::~YoloV8DecoderNode() = default;
 
 // Callback for the FSM flag and selected target
-void YoloV8DecoderNode::FsmFlagCallback(const std_msgs::msg::Bool::SharedPtr msg)
+void YoloV8DecoderNode::enableCallback(const std_msgs::msg::String::SharedPtr msg)
 {
-  start_detection_flag_ = msg->data;
-  // RCLCPP_INFO(this->get_logger(), "Detection flag updated: %s", start_detection_flag_ ? "true" : "false");
+  isEnable = msg->data;
 }
 
-void YoloV8DecoderNode::FsmSelectTargetCallback(const std_msgs::msg::Int8::SharedPtr msg)
+void YoloV8DecoderNode::targetSelectCallback(const std_msgs::msg::Int8::SharedPtr msg)
 {
   selected_target_id_ = msg->data;
   RCLCPP_INFO(this->get_logger(), "Selected target updated: %d", selected_target_id_);
@@ -98,7 +97,7 @@ void YoloV8DecoderNode::FsmSelectTargetCallback(const std_msgs::msg::Int8::Share
 void YoloV8DecoderNode::InputCallback(const nvidia::isaac_ros::nitros::NitrosTensorListView & msg)
 {
   // Check if detection is allowed
-  if (!start_detection_flag_) {
+  if (!isEnabled) {
     // RCLCPP_INFO(this->get_logger(), "Detection is currently disabled, skipping InputCallback.");
     return;
   }
@@ -206,21 +205,21 @@ void YoloV8DecoderNode::InputCallback(const nvidia::isaac_ros::nitros::NitrosTen
       
 
       // Only process and publish detections with the selected target id
-      if (class_id == selected_target_id_) {
-          selected_detections_arr.detections.push_back(detection);
+      if (robot_state_ == "PREPARE") {
+        selected_detections_arr.detections.push_back(detection);
 
-          // Pass selected detection to YOLOKF
-          yolo_kf_->set_rate(fs_);
-          yolo_kf_->process_detection(detection);
+        // Pass selected detection to YOLOKF
+        yolo_kf_->set_rate(fs_);
+        yolo_kf_->process_detection(detection);
 
-          // Get KF estimated detection
-          vision_msgs::msg::Detection2D kf_estimated_detection = yolo_kf_->get_kf_estimated_detection();
+        // Get KF estimated detection
+        vision_msgs::msg::Detection2D kf_estimated_detection = yolo_kf_->get_kf_estimated_detection();
 
-          // Publish the KF estimated detection
-          vision_msgs::msg::Detection2DArray kf_estimated_detections_arr;
-          kf_estimated_detections_arr.header = detection.header;
-          kf_estimated_detections_arr.detections.push_back(kf_estimated_detection);
-          selected_target_kf_pub_->publish(kf_estimated_detections_arr);
+        // Publish the KF estimated detection
+        vision_msgs::msg::Detection2DArray kf_estimated_detections_arr;
+        kf_estimated_detections_arr.header = detection.header;
+        kf_estimated_detections_arr.detections.push_back(kf_estimated_detection);
+        selected_target_kf_pub_->publish(kf_estimated_detections_arr);
       }
   }
 
@@ -236,9 +235,6 @@ void YoloV8DecoderNode::InputCallback(const nvidia::isaac_ros::nitros::NitrosTen
     // selected_detections_arr.header.frame_id = "d435_color_optical_frame";
     selected_target_pub_->publish(selected_detections_arr);
   }
-
-
-
 
 
 }

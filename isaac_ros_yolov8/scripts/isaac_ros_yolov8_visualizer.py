@@ -29,11 +29,10 @@ from rclpy.node import Node
 from sensor_msgs.msg import Image
 from vision_msgs.msg import Detection2DArray
 
-names = {
-        0: 'Unripe tomato',
-        1: 'Ripe tomato',
+detection_info = {
+    0: {'name': 'Unripe tomato', 'color': (0, 0, 255)},  # Red
+    1: {'name': 'Ripe tomato', 'color': (0, 255, 0)}     # Green
 }
-
 
 class Yolov8Visualizer(Node):
     QUEUE_SIZE = 10
@@ -93,6 +92,69 @@ class Yolov8Visualizer(Node):
         processed_img = self._bridge.cv2_to_imgmsg(
             cv2_img, encoding=img_msg.encoding)
         self._processed_image_pub.publish(processed_img)
+
+    # def detections_callback(self, detections_msg, img_msg):
+    #     # 定義影像訊息及座標訊息
+    #     processed_image_msgs = Image()
+    #     cluster_2Dcoord_msgs = Int32MultiArray()
+    #     cluster_3Dcoord_msgs = Float64MultiArray()
+    #     topmost_3Dcoord_msgs = Float64MultiArray()
+    #     # Temp variables
+    #     bbox_x_mean = []
+    #     bbox_y_mean = []
+    #     bbox_average_centre = [0, 0]
+    #     topmost_bbox = None  # Initialize variable to hold the topmost bbox
+        
+    #     # Convert image message to OpenCV image
+    #     cv2_img = self._bridge.imgmsg_to_cv2(img_msg, "bgr8")
+
+    #     # 處理每個偵測框以繪製 bounding box 和標籤
+    #     for detection in detections_msg.detections:
+    #         center_x = detection.bbox.center.position.x
+    #         center_y = detection.bbox.center.position.y
+    #         width = detection.bbox.size_x
+    #         height = detection.bbox.size_y
+
+    #         # Check if it's the topmost bbox
+    #         if topmost_bbox is None or center_y < topmost_bbox.bbox.center.position.y:
+    #             topmost_bbox = detection
+
+    #         bbox_x_mean.append(center_x)
+    #         bbox_y_mean.append(center_y)
+    #         `
+    #         # Get the detected class id
+    #         class_id = int(detection.results[0].hypothesis.class_id)
+    #         label = detection_info[class_id]['name']
+    #         color = detection_info[class_id]['color']
+    #         conf_score = detection.results[0].hypothesis.score
+
+    #         min_pt = (round(center_x - (width / 2.0)),
+    #                   round(center_y - (height / 2.0)))
+    #         max_pt = (round(center_x + (width / 2.0)),
+    #                   round(center_y + (height / 2.0)))
+
+    #         lw = max(round((img_msg.height + img_msg.width) / 2 * 0.003), 2)  # line width
+    #         tf = max(lw - 1, 1)  # font thickness
+    #         # text width, height
+    #         w, h = cv2.getTextSize(label, 0, fontScale=lw / 3, thickness=tf)[0]
+    #         outside = min_pt[1] - h >= 3
+
+    #         cv2.rectangle(cv2_img, min_pt, max_pt, color, self.bbox_thickness)
+    #         cv2.putText(cv2_img, label, (min_pt[0], min_pt[1]-2 if outside else min_pt[1]+h+2),
+    #                     0, lw / 3, txt_color, thickness=tf, lineType=cv2.LINE_AA)
+
+    #     # Calculate the average centre of all bounding boxes
+    #     bbox_average_centre[0] = sum(bbox_x_mean) / len(bbox_x_mean)
+    #     bbox_average_centre[1] = sum(bbox_y_mean) / len(bbox_y_mean)
+
+    #     # 發布座標資訊
+    #     self.cluster_2d_coord_pub.publish(cluster_2Dcoord_msgs)
+    #     self.cluster_3d_coord_pub.publish(cluster_3Dcoord_msgs)
+    #     self.topmost_3d_coord_pub.publish(topmost_3Dcoord_msgs)
+
+    #     # 發布處理後的影像
+    #     processed_image_msgs = self._bridge.cv2_to_imgmsg(processed_image, encoding=img_msg.encoding)
+    #     self._processed_image_pub.publish(processed_image_msgs)
 
 
 def main():
