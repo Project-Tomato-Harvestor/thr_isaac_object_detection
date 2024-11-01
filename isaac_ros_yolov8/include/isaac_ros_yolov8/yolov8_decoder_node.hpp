@@ -38,13 +38,13 @@ public:
 
 private:
   void InputCallback(const nvidia::isaac_ros::nitros::NitrosTensorListView & msg);
-  void FsmFlagCallback(const std_msgs::msg::Bool::SharedPtr msg);
-  void FsmSelectTargetCallback(const std_msgs::msg::Int8::SharedPtr msg);
+  void enableCallback(const std_msgs::msg::Bool::SharedPtr msg);
+  // void FsmSelectTargetCallback(const std_msgs::msg::Int8::SharedPtr msg);
   // void kf_timer_callback();
 
   // Subscriptions for FSM flags and selected target
-  rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr fsm_flag_sub_;
-  rclcpp::Subscription<std_msgs::msg::Int8>::SharedPtr fsm_select_target_sub_;
+  rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr enable_sub_;
+  // rclcpp::Subscription<std_msgs::msg::Int8>::SharedPtr fsm_select_target_sub_;
 
   // Subscription to input NitrosTensorList messages
   std::shared_ptr<nvidia::isaac_ros::nitros::ManagedNitrosSubscriber<
@@ -65,7 +65,7 @@ private:
   // YOLOv8 Decoder Parameters
   double confidence_threshold_{};
   double nms_threshold_{};
-  bool start_detection_flag_;  // Flag to control whether detection should be active
+  bool isEnabled_;  // Flag to control whether detection should be active
   int selected_target_id_;     // Selected target for detection
 
   // YOLOKF object to handle Kalman filtering for the selected target

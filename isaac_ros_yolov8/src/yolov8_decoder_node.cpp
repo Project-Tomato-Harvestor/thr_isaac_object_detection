@@ -65,39 +65,40 @@ YoloV8DecoderNode::YoloV8DecoderNode(const rclcpp::NodeOptions options)
   tensor_name_{declare_parameter<std::string>("tensor_name", "output_tensor")},
   confidence_threshold_{declare_parameter<double>("confidence_threshold", 0.25)},
   nms_threshold_{declare_parameter<double>("nms_threshold", 0.45)},
-  isEnabled{false}, // Initialise detection flag to false
+  isEnabled_{true}, // Initialise detection flag to false
   selected_target_id_{1}, // Initialise selected target id to -1 (none of the classes)
   fs_(20.0), // Set the sampling frequency to 20 Hz
   yolo_kf_{std::make_shared<YOLOKF>(this)} // Instantiate YOLOKF
 {
   // Add a subscriber to control detection start/stop and select target
   enable_sub_ = this->create_subscription<std_msgs::msg::Bool>(
-      "yolo_enable",
+      "/yolo/enable",
       10, std::bind(&YoloV8DecoderNode::enableCallback, this, std::placeholders::_1));
     
-  target_select_sub_ = this->create_subscription<std_msgs::msg::Int8>(
-      "/fsm_flag/select_target",
-      10, std::bind(&YoloV8DecoderNode::targetSelectCallback, this, std::placeholders::_1));
+  // target_select_sub_ = this->create_subscription<std_msgs::msg::Bool>(
+  //     "/yolo/target_select",
+  //     10, std::bind(&YoloV8DecoderNode::targetSelectCallback, this, std::placeholders::_1));
 }
 
 YoloV8DecoderNode::~YoloV8DecoderNode() = default;
 
 // Callback for the FSM flag and selected target
-void YoloV8DecoderNode::enableCallback(const std_msgs::msg::String::SharedPtr msg)
+void YoloV8DecoderNode::enableCallback(const std_msgs::msg::Bool::SharedPtr msg)
 {
-  isEnable = msg->data;
+  isEnabled_ = msg->data;
 }
 
-void YoloV8DecoderNode::targetSelectCallback(const std_msgs::msg::Int8::SharedPtr msg)
-{
-  selected_target_id_ = msg->data;
-  RCLCPP_INFO(this->get_logger(), "Selected target updated: %d", selected_target_id_);
-}
+// void YoloV8DecoderNode::targetSelectCallback(const std_msgs::msg::Int8::SharedPtr msg)
+// {
+//   selected_target_id_ = msg->data;
+//   RCLCPP_INFO(this->get_logger(), "Selected target updated: %d", selected_target_id_);
+// }
+
 
 void YoloV8DecoderNode::InputCallback(const nvidia::isaac_ros::nitros::NitrosTensorListView & msg)
 {
   // Check if detection is allowed
-  if (!isEnabled) {
+  if (!isEnabled_) {
     // RCLCPP_INFO(this->get_logger(), "Detection is currently disabled, skipping InputCallback.");
     return;
   }
@@ -205,7 +206,7 @@ void YoloV8DecoderNode::InputCallback(const nvidia::isaac_ros::nitros::NitrosTen
       
 
       // Only process and publish detections with the selected target id
-      if (robot_state_ == "PREPARE") {
+      if (class_id == selected_target_id_) {
         selected_detections_arr.detections.push_back(detection);
 
         // Pass selected detection to YOLOKF
