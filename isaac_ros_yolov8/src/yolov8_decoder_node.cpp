@@ -63,8 +63,8 @@ YoloV8DecoderNode::YoloV8DecoderNode(const rclcpp::NodeOptions options)
   selected_target_kf_pub_{create_publisher<vision_msgs::msg::Detection2DArray>(
     "selected_target_kf_output", 50)},
   tensor_name_{declare_parameter<std::string>("tensor_name", "output_tensor")},
-  confidence_threshold_{declare_parameter<double>("confidence_threshold", 0.25)},
-  nms_threshold_{declare_parameter<double>("nms_threshold", 0.6)},
+  confidence_threshold_{declare_parameter<double>("confidence_threshold", 0.6)},
+  nms_threshold_{declare_parameter<double>("nms_threshold", 0.45)},
   isEnabled_{true}, // Initialise detection flag to false
   selected_target_id_{1}, // Initialise selected target id to -1 (none of the classes)
   fs_(20.0), // Set the sampling frequency to 20 Hz
@@ -170,7 +170,7 @@ void YoloV8DecoderNode::InputCallback(const nvidia::isaac_ros::nitros::NitrosTen
 
       // 2D object Bbox
       vision_msgs::msg::BoundingBox2D bbox;
-      float scale_factor = 1.3; // Example scaling factor, you can adjust this value
+      float scale_factor = 1.5; // Example scaling factor, you can adjust this value
       // if (class_id == selected_target_id_) {
       //   scale_factor = 1.0;
       // }
