@@ -29,10 +29,17 @@ from rclpy.node import Node
 from sensor_msgs.msg import Image
 from vision_msgs.msg import Detection2DArray
 
-detection_info = {
-    0: {'name': 'Unripe tomato', 'color': (0, 0, 255)},  # Red
-    1: {'name': 'Ripe tomato', 'color': (0, 255, 0)}     # Green
+names = {
+    0: 'Unripe tomato',
+    1: 'Ripe tomato',
 }
+
+
+
+# detection_info = {
+#     0: {'name': 'Unripe tomato', 'color': (0, 0, 255)},  # Red
+#     1: {'name': 'Ripe tomato', 'color': (0, 255, 0)}     # Green
+# }
 
 class Yolov8Visualizer(Node):
     QUEUE_SIZE = 10
@@ -48,11 +55,11 @@ class Yolov8Visualizer(Node):
         self._detections_subscription = message_filters.Subscriber(
             self,
             Detection2DArray,
-            'detections_output')
+            '/d435/detections_output')
         self._image_subscription = message_filters.Subscriber(
             self,
             Image,
-            '/yolov8_encoder/resize/image')
+            '/d435/color/image_raw')
 
         self.time_synchronizer = message_filters.TimeSynchronizer(
             [self._detections_subscription, self._image_subscription],
@@ -68,6 +75,9 @@ class Yolov8Visualizer(Node):
             center_y = detection.bbox.center.position.y
             width = detection.bbox.size_x
             height = detection.bbox.size_y
+
+#         label = detection_info[class_id]['name']
+#         color = detection_info[class_id]['color']
 
             label = names[int(detection.results[0].hypothesis.class_id)]
             conf_score = detection.results[0].hypothesis.score

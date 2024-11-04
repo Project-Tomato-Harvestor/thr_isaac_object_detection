@@ -64,7 +64,7 @@ YoloV8DecoderNode::YoloV8DecoderNode(const rclcpp::NodeOptions options)
     "selected_target_kf_output", 50)},
   tensor_name_{declare_parameter<std::string>("tensor_name", "output_tensor")},
   confidence_threshold_{declare_parameter<double>("confidence_threshold", 0.25)},
-  nms_threshold_{declare_parameter<double>("nms_threshold", 0.45)},
+  nms_threshold_{declare_parameter<double>("nms_threshold", 0.6)},
   isEnabled_{true}, // Initialise detection flag to false
   selected_target_id_{1}, // Initialise selected target id to -1 (none of the classes)
   fs_(20.0), // Set the sampling frequency to 20 Hz
