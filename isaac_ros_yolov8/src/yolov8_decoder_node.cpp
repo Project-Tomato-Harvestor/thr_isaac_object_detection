@@ -72,7 +72,7 @@ YoloV8DecoderNode::YoloV8DecoderNode(const rclcpp::NodeOptions options)
 {
   // Add a subscriber to control detection start/stop and select target
   enable_sub_ = this->create_subscription<std_msgs::msg::Bool>(
-      "/yolo/enable",
+      "/yolo_enable",
       10, std::bind(&YoloV8DecoderNode::enableCallback, this, std::placeholders::_1));
     
   // target_select_sub_ = this->create_subscription<std_msgs::msg::Bool>(
@@ -86,6 +86,7 @@ YoloV8DecoderNode::~YoloV8DecoderNode() = default;
 void YoloV8DecoderNode::enableCallback(const std_msgs::msg::Bool::SharedPtr msg)
 {
   isEnabled_ = msg->data;
+  // RCLCPP_INFO(this->get_logger(), "Detection enabled: %d", isEnabled_);
 }
 
 // void YoloV8DecoderNode::targetSelectCallback(const std_msgs::msg::Int8::SharedPtr msg)
