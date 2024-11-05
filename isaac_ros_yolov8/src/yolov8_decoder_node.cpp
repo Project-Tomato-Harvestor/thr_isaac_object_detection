@@ -66,7 +66,7 @@ YoloV8DecoderNode::YoloV8DecoderNode(const rclcpp::NodeOptions options)
   confidence_threshold_{declare_parameter<double>("confidence_threshold", 0.6)},
   nms_threshold_{declare_parameter<double>("nms_threshold", 0.45)},
   isEnabled_{true}, // Initialise detection flag to false
-  selected_target_id_{1}, // Initialise selected target id to -1 (none of the classes)
+  selected_target_id_{0}, // Initialise selected target id to -1 (none of the classes)
   fs_(20.0), // Set the sampling frequency to 20 Hz
   yolo_kf_{std::make_shared<YOLOKF>(this)} // Instantiate YOLOKF
 {
@@ -170,7 +170,8 @@ void YoloV8DecoderNode::InputCallback(const nvidia::isaac_ros::nitros::NitrosTen
 
       // 2D object Bbox
       vision_msgs::msg::BoundingBox2D bbox;
-      float scale_factor = 1.5; // Example scaling factor, you can adjust this value
+      // Example scaling factor, you can adjust this value
+      float scale_factor = 1.2; 
       // if (class_id == selected_target_id_) {
       //   scale_factor = 1.0;
       // }
