@@ -171,7 +171,7 @@ void YoloV8DecoderNode::InputCallback(const nvidia::isaac_ros::nitros::NitrosTen
       // 2D object Bbox
       vision_msgs::msg::BoundingBox2D bbox;
       // Example scaling factor, you can adjust this value
-      float scale_factor = 1.2; 
+      float scale_factor = 1.6; 
       // if (class_id == selected_target_id_) {
       //   scale_factor = 1.0;
       // }
